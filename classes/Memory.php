@@ -20,7 +20,7 @@ class Memory
     private $session;
 
     function __construct($arrayName)
-    {
+    {        
         $this->arrayName = $arrayName;
         if (session_id() == '') {
             session_start();
@@ -29,7 +29,7 @@ class Memory
             }
             $this->session = $_SESSION[$this->arrayName];
         }
-    }
+    }   
 
     /**
      * Save value By key in memory
@@ -40,7 +40,7 @@ class Memory
      */
     public function save($key, $obj)
     {
-        array_push($this->session, serialize($obj));
+        array_push($this->session, array( 'key' => $key,'value' => serialize($obj)));
         $_SESSION[$this->arrayName] = $this->session;
     }
 
@@ -64,7 +64,7 @@ class Memory
      */
     public function fetch($key)
     {
-        return unserialize($this->session[$key]);
+        return $this->fetchByAttribute($key);
     }
 
     /**
@@ -89,10 +89,32 @@ class Memory
     public function fetchAllByAttribute($attrName, $attrValue, $retrievedAttr)
     {
         $result = array();
-        foreach ($this->session as $key => $value) {
-            $obj = unserialize($value);
-            if ($obj->$attrName == $attrValue) {
-                $result[] = $obj->$retrievedAttr;
+        foreach ($this->session as $hash => $obj) {
+            $key = $obj['key'];
+            $value = unserialize($obj['value']);
+            if ($value->$attrName == $attrValue) {
+                $result[] = $value->$retrievedAttr;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Get object from memory by key from memory
+     *
+     * @param string $attrKey the key we want to retrieve its object
+     *
+     * @return object
+     */
+    private function fetchByAttribute($attrKey)
+    {
+        $result = null;
+        foreach ($this->session as $hash => $obj) {
+            $key = $obj['key'];
+            $value = unserialize($obj['value']);
+            if ($attrKey == $key) {
+                $result = $value;
             }
         }
 
